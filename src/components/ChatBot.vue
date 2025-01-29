@@ -37,7 +37,7 @@
 
 <script>
 import axios from "axios";
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 export default {
   setup() {
@@ -46,34 +46,57 @@ export default {
     const loading = ref(false);
     const error = ref(null);
     const chatBox = ref(null);
+    const MAX_MESSAGES = 20; // Limiet van berichten in de geschiedenis
 
+    // ✅ Laad geschiedenis uit localStorage
+    const loadChatHistory = () => {
+      const storedMessages = localStorage.getItem("chatHistory");
+      if (storedMessages) {
+        messages.value = JSON.parse(storedMessages);
+      } else {
+        // Voeg een welkomsbericht toe als er nog geen berichten zijn
+        messages.value.push({ text: "Hallo! Waarmee kan ik je helpen?", sender: "bot" });
+      }
+    };
+
+    // ✅ Sla geschiedenis op in localStorage
+    const saveChatHistory = () => {
+      if (messages.value.length > MAX_MESSAGES) {
+        messages.value = messages.value.slice(-MAX_MESSAGES); // Houd de laatste berichten bij
+      }
+      localStorage.setItem("chatHistory", JSON.stringify(messages.value));
+    };
+
+    // ✅ Verzenden van bericht
     const sendMessage = async () => {
-    if (!userInput.value.trim()) return;
+      if (!userInput.value.trim()) return;
 
-    console.log("Verzoek verstuurd naar API:", userInput.value); // 🔥 Debug logging
+      messages.value.push({ text: userInput.value, sender: "user" });
+      loading.value = true;
+      userInput.value = "";
 
-    messages.value.push({ text: userInput.value, sender: "user" });
-    loading.value = true;
-    userInput.value = "";
-
-    try {
+      try {
         const response = await axios.post("http://localhost:5000/api/chatbot", {
-            message: messages.value[messages.value.length - 1].text,
+          message: messages.value[messages.value.length - 1].text,
         });
 
-        console.log("API antwoord ontvangen:", response.data); // 🔥 Debug logging
-
         messages.value.push({ text: response.data.response, sender: "bot" });
-
-    } catch (error) {
+      } catch (error) {
         messages.value.push({ text: "Er is een fout opgetreden. Probeer later opnieuw.", sender: "bot" });
         console.error("❌ Fout bij ophalen van AI-reactie:", error.response ? error.response.data : error.message);
-    } finally {
+      } finally {
         loading.value = false;
-    }
-};
+        saveChatHistory(); // ✅ Geschiedenis opslaan na elk bericht
+      }
+    };
 
+    // ✅ Laad de chatgeschiedenis bij het openen van de pagina
+    onMounted(() => {
+      loadChatHistory();
+    });
 
+    // ✅ Bewaak berichten en sla ze automatisch op
+    watch(messages, saveChatHistory, { deep: true });
 
     return { userInput, messages, sendMessage, loading, error, chatBox };
   }
