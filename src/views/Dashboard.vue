@@ -17,9 +17,9 @@
       </template>
     </draggable>
 
-    <!-- Verborgen widgets opnieuw tonen -->
+    <!-- Verborgen widgets opnieuw tonen met plus (+) knoppen -->
     <div v-if="hiddenWidgets.length > 0" class="hidden-widgets">
-      <h3>Verborgen Widgets</h3>
+      <h3>📦 Verborgen Widgets</h3>
       <div class="hidden-buttons">
         <button
           v-for="widget in hiddenWidgets"
@@ -27,7 +27,7 @@
           @click="restoreWidget(widget.id)"
           class="widget-btn restore-btn"
         >
-          <i class="fas fa-plus"></i> Herstel {{ widget.name }}
+          <i class="fas fa-plus"></i> {{ widget.name }}
         </button>
       </div>
     </div>
@@ -46,10 +46,10 @@ export default {
   components: { draggable },
   setup() {
     const defaultWidgets = [
-      { id: 1, name: "Weer", component: markRaw(WeatherWidget), visible: true },
-      { id: 2, name: "Crypto", component: markRaw(CryptoWidget), visible: true },
-      { id: 3, name: "Nieuws", component: markRaw(NewsWidget), visible: true },
-      { id: 4, name: "Random Feit", component: markRaw(FactWidget), visible: true }
+      { id: 1, name: "Weer 🌦️", component: markRaw(WeatherWidget), visible: true },
+      { id: 2, name: "Crypto 💰", component: markRaw(CryptoWidget), visible: true },
+      { id: 3, name: "Nieuws 📰", component: markRaw(NewsWidget), visible: true },
+      { id: 4, name: "Random Feit 🤔", component: markRaw(FactWidget), visible: true }
     ];
 
     const widgets = ref([]);
@@ -173,21 +173,15 @@ export default {
 
 .close-btn {
   color: red;
-}
-
-.restore-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
+  font-size: 16px;
+  background-color: rgba(255, 0, 0, 0.1);
+  padding: 5px 10px;
   border-radius: 5px;
-  padding: 8px 15px;
+  transition: 0.3s;
 }
 
-.restore-btn:hover {
-  background-color: #45a049;
+.close-btn:hover {
+  background-color: rgba(255, 0, 0, 0.3);
 }
 
 /* Verborgen Widgets */
@@ -200,5 +194,22 @@ export default {
   display: flex;
   justify-content: center;
   gap: 10px;
+}
+
+/* Plus (Herstel) Knop */
+.restore-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  font-size: 14px;
+}
+
+.restore-btn:hover {
+  background-color: #45a049;
 }
 </style>
