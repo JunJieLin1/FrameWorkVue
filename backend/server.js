@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
+import chatbotRoute from "./api/chatbot.js";
 
 dotenv.config();
 
@@ -227,6 +228,8 @@ app.delete("/user/delete", async (req, res) => {
   }
 });
 
+// ✅ Voeg de chatbot API route toe
+app.use("/api/chatbot", chatbotRoute);
 
 // ✅ **Start de server**
 const PORT = process.env.PORT || 5000;
