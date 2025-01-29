@@ -5,17 +5,12 @@
     <!-- Draggable Grid voor Widgets -->
     <draggable v-model="widgets" item-key="id" class="dashboard-grid" @end="saveWidgets">
       <template #item="{ element }">
-        <div v-if="element.visible" class="widget" :class="{ minimized: element.minimized }">
+        <div v-if="element.visible" class="widget">
           <div class="widget-header">
             <h3>{{ element.name }}</h3>
-            <div class="widget-actions">
-              <button @click="toggleSize(element)" class="size-btn">
-                <i :class="element.minimized ? 'fas fa-expand' : 'fas fa-compress'"></i>
-              </button>
-              <button @click="hideWidget(element.id)" class="close-btn">
-                <i class="fas fa-minus"></i>
-              </button>
-            </div>
+            <button @click="hideWidget(element.id)" class="widget-btn close-btn">
+              <i class="fas fa-minus"></i>
+            </button>
           </div>
           <component :is="element.component"></component>
         </div>
@@ -30,7 +25,7 @@
           v-for="widget in hiddenWidgets"
           :key="widget.id"
           @click="restoreWidget(widget.id)"
-          class="restore-btn"
+          class="widget-btn restore-btn"
         >
           <i class="fas fa-plus"></i> Herstel {{ widget.name }}
         </button>
@@ -40,7 +35,7 @@
 </template>
 
 <script>
-import { ref, markRaw, watch } from "vue";
+import { ref, markRaw, watch, onMounted } from "vue";
 import draggable from "vuedraggable";
 import WeatherWidget from "@/components/WeatherWidget.vue";
 import CryptoWidget from "@/components/CryptoWidget.vue";
@@ -50,14 +45,46 @@ import FactWidget from "@/components/FactWidget.vue";
 export default {
   components: { draggable },
   setup() {
-    const widgets = ref([
-      { id: 1, name: "Weer", component: markRaw(WeatherWidget), visible: true, minimized: false },
-      { id: 2, name: "Crypto", component: markRaw(CryptoWidget), visible: true, minimized: false },
-      { id: 3, name: "Nieuws", component: markRaw(NewsWidget), visible: true, minimized: false },
-      { id: 4, name: "Random Feit", component: markRaw(FactWidget), visible: true, minimized: false }
-    ]);
+    const defaultWidgets = [
+      { id: 1, name: "Weer", component: markRaw(WeatherWidget), visible: true },
+      { id: 2, name: "Crypto", component: markRaw(CryptoWidget), visible: true },
+      { id: 3, name: "Nieuws", component: markRaw(NewsWidget), visible: true },
+      { id: 4, name: "Random Feit", component: markRaw(FactWidget), visible: true }
+    ];
 
+    const widgets = ref([]);
     const hiddenWidgets = ref([]);
+
+    const loadWidgets = () => {
+      const savedWidgets = JSON.parse(localStorage.getItem("dashboardWidgets"));
+      const savedHidden = JSON.parse(localStorage.getItem("hiddenWidgets"));
+
+      if (savedWidgets) {
+        widgets.value = savedWidgets.map((w) => ({
+          ...w,
+          component: markRaw(getComponent(w.id))
+        }));
+      } else {
+        widgets.value = [...defaultWidgets];
+      }
+
+      if (savedHidden) {
+        hiddenWidgets.value = savedHidden.map((w) => ({
+          ...w,
+          component: markRaw(getComponent(w.id))
+        }));
+      }
+    };
+
+    const getComponent = (id) => {
+      switch (id) {
+        case 1: return WeatherWidget;
+        case 2: return CryptoWidget;
+        case 3: return NewsWidget;
+        case 4: return FactWidget;
+        default: return null;
+      }
+    };
 
     const hideWidget = (id) => {
       const widgetIndex = widgets.value.findIndex((w) => w.id === id);
@@ -65,6 +92,7 @@ export default {
         const removedWidget = widgets.value.splice(widgetIndex, 1)[0];
         removedWidget.visible = false;
         hiddenWidgets.value.push(removedWidget);
+        saveWidgets();
       }
     };
 
@@ -74,14 +102,10 @@ export default {
         const restoredWidget = hiddenWidgets.value.splice(widgetIndex, 1)[0];
         restoredWidget.visible = true;
         widgets.value.push(restoredWidget);
+        saveWidgets();
       }
     };
 
-    const toggleSize = (widget) => {
-      widget.minimized = !widget.minimized;
-    };
-
-    // Optioneel: Sla widget posities op als je wilt dat deze behouden blijven
     const saveWidgets = () => {
       localStorage.setItem("dashboardWidgets", JSON.stringify(widgets.value));
       localStorage.setItem("hiddenWidgets", JSON.stringify(hiddenWidgets.value));
@@ -90,7 +114,9 @@ export default {
     watch(widgets, saveWidgets, { deep: true });
     watch(hiddenWidgets, saveWidgets, { deep: true });
 
-    return { widgets, hiddenWidgets, hideWidget, restoreWidget, toggleSize };
+    onMounted(loadWidgets);
+
+    return { widgets, hiddenWidgets, hideWidget, restoreWidget };
   }
 };
 </script>
@@ -124,14 +150,6 @@ export default {
   border-radius: 10px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: all 0.3s ease;
-}
-
-/* Verkleinen/Vergroten */
-.minimized {
-  height: 60px;
-  overflow: hidden;
-  padding: 10px;
 }
 
 /* Widget Header met Acties */
@@ -143,26 +161,33 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Knoppen */
-.widget-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.size-btn,
-.close-btn {
+/* Min (Verberg) en Plus (Herstel) Knoppen */
+.widget-btn {
   background: none;
   border: none;
   font-size: 1.2em;
   cursor: pointer;
-}
-
-.size-btn {
-  color: blue;
+  padding: 5px;
+  border-radius: 5px;
 }
 
 .close-btn {
   color: red;
+}
+
+.restore-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+}
+
+.restore-btn:hover {
+  background-color: #45a049;
 }
 
 /* Verborgen Widgets */
@@ -175,21 +200,5 @@ export default {
   display: flex;
   justify-content: center;
   gap: 10px;
-}
-
-.restore-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.restore-btn:hover {
-  background-color: #45a049;
 }
 </style>
