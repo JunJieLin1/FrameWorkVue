@@ -173,6 +173,28 @@ app.put("/user/update", async (req, res) => {
 
 
 
+// ✅ **Aparte route voor thema-update**
+app.put("/user/theme", async (req, res) => {
+  const { email, theme } = req.body;
+
+  if (!email || !theme) {
+    return res.status(400).json({ message: "E-mail en thema zijn vereist!" });
+  }
+
+  try {
+    await db.run("UPDATE users SET theme = ? WHERE email = ?", [theme, email]);
+
+    res.json({ message: "Thema succesvol bijgewerkt!", theme });
+  } catch (error) {
+    console.error("❌ Kan thema niet opslaan:", error);
+    res.status(500).json({ message: "Fout bij opslaan van thema" });
+  }
+});
+
+
+
+
+
 
 
 // ✅ Account verwijderen met wachtwoordcontrole

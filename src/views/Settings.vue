@@ -132,23 +132,28 @@ export default {
     };
 
     // ✅ Thema wisselen en direct opslaan
-    const toggleTheme = async () => {
-      darkMode.value = !darkMode.value;
-      document.documentElement.classList.remove("dark", "light");
-      document.documentElement.classList.add(darkMode.value ? "dark" : "light");
-      localStorage.setItem("theme", darkMode.value ? "dark" : "light");
+const toggleTheme = async () => {
+  darkMode.value = !darkMode.value;
 
-      try {
-        await axios.put("http://localhost:5000/user/update", {
-          email: user.value.email,
-          theme: darkMode.value ? "dark" : "light"
-        });
+  // ✅ Reset eerst bestaande klassen en voeg de nieuwe toe
+  document.documentElement.classList.remove("dark", "light");
+  document.documentElement.classList.add(darkMode.value ? "dark" : "light");
+  localStorage.setItem("theme", darkMode.value ? "dark" : "light");
 
-        alert("Thema succesvol bijgewerkt!");
-      } catch (error) {
-        console.error("❌ Kan thema niet opslaan:", error);
-      }
-    };
+  try {
+    // ✅ Gebruik nu de aparte route `/user/theme` i.p.v. `/user/update`
+    await axios.put("http://localhost:5000/user/theme", {
+      email: user.value.email,
+      theme: darkMode.value ? "dark" : "light"
+    });
+
+    alert("Thema succesvol bijgewerkt!");
+
+  } catch (error) {
+    console.error("❌ Kan thema niet opslaan:", error);
+  }
+};
+
 
     // ✅ Account verwijderen
     const deleteAccount = async () => {
