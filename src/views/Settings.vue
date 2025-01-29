@@ -61,37 +61,33 @@ export default {
     const deletePassword = ref("");
     const darkMode = ref(localStorage.getItem("theme") === "dark");
 
-
-    
-
-    // 🔹 Controleer of gebruiker ingelogd is
+    // ✅ Controleer of gebruiker ingelogd is
     const checkAuth = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    router.push("/login");
-    return;
-  }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const response = await axios.get(`http://localhost:5000/user/${payload.email}`);
-    user.value = response.data;
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const response = await axios.get(`http://localhost:5000/user/${payload.email}`);
+        user.value = response.data;
 
-    // ✅ Controleer of een thema is ingesteld en pas het toe
-    if (response.data.theme) {
-      darkMode.value = response.data.theme === "dark";
-      document.documentElement.classList.toggle("dark", darkMode.value);
-      localStorage.setItem("theme", darkMode.value ? "dark" : "light");
-    }
-  } catch (error) {
-    console.error("❌ Kan gebruikersgegevens niet ophalen:", error);
-    router.push("/login");
-  }
-};
+        // ✅ Controleer of een thema is ingesteld en pas het toe
+        if (response.data.theme) {
+          darkMode.value = response.data.theme === "dark";
+          document.documentElement.classList.remove("dark", "light");
+          document.documentElement.classList.add(darkMode.value ? "dark" : "light");
+          localStorage.setItem("theme", darkMode.value ? "dark" : "light");
+        }
+      } catch (error) {
+        console.error("❌ Kan gebruikersgegevens niet ophalen:", error);
+        router.push("/login");
+      }
+    };
 
-
-
-    // 🔹 Profielfoto verwerken
+    // ✅ Profielfoto verwerken
     const handleFileUpload = (event) => {
       profileImage.value = event.target.files[0];
     };
@@ -109,16 +105,13 @@ export default {
         });
         user.value.profile_image = response.data.filePath;
         alert("Profielfoto geüpdatet!");
-        // ✅ Forceer de UI om direct te herladen
-        setTimeout(() => {
         window.location.reload();
-        }, 300);
       } catch (error) {
         console.error("❌ Kan profielfoto niet updaten:", error);
       }
     };
 
-    // 🔹 Gebruikersgegevens bijwerken
+    // ✅ Gebruikersgegevens bijwerken
     const updateUser = async () => {
       try {
         const response = await axios.put(`http://localhost:5000/user/update`, {
@@ -127,92 +120,57 @@ export default {
           theme: darkMode.value ? "dark" : "light"
         });
 
-        // ✅ Opslaan van nieuwe token als e-mail is gewijzigd
         if (response.data.token) {
           localStorage.setItem("token", response.data.token);
         }
 
         alert("Gegevens succesvol bijgewerkt!");
-        // ✅ Forceer de UI om direct te herladen
-        setTimeout(() => {
         window.location.reload();
-        }, 300);
       } catch (error) {
         console.error("❌ Kan gegevens niet bijwerken:", error);
       }
     };
 
-  // 🔹 Thema wisselen en UI direct updaten
-const toggleTheme = async () => {
-  darkMode.value = !darkMode.value;
+    // ✅ Thema wisselen en direct opslaan
+    const toggleTheme = async () => {
+      darkMode.value = !darkMode.value;
+      document.documentElement.classList.remove("dark", "light");
+      document.documentElement.classList.add(darkMode.value ? "dark" : "light");
+      localStorage.setItem("theme", darkMode.value ? "dark" : "light");
 
-  // ✅ Zorg ervoor dat de class op de <html> wordt toegepast
-  if (darkMode.value) {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
+      try {
+        await axios.put("http://localhost:5000/user/update", {
+          email: user.value.email,
+          theme: darkMode.value ? "dark" : "light"
+        });
 
-  localStorage.setItem("theme", darkMode.value ? "dark" : "light");
+        alert("Thema succesvol bijgewerkt!");
+      } catch (error) {
+        console.error("❌ Kan thema niet opslaan:", error);
+      }
+    };
 
-  try {
-    await axios.put("http://localhost:5000/user/update", {
-      email: user.value.email,
-      theme: darkMode.value ? "dark" : "light"
-    });
-
-    alert("Thema succesvol bijgewerkt!");
-
-    // ✅ Forceer de UI om direct te herladen
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
-
-  } catch (error) {
-    console.error("❌ Kan thema niet opslaan:", error);
-  }
-};
-onMounted(async () => {
-  await checkAuth();
-
-  // ✅ Controleer of een thema in de database staat en pas toe
-  if (user.value.theme) {
-    darkMode.value = user.value.theme === "dark";
-    document.documentElement.classList.toggle("dark", darkMode.value);
-    localStorage.setItem("theme", darkMode.value ? "dark" : "light");
-  }
-});
-
-
-
-
-
-    // 🔹 Account verwijderen
+    // ✅ Account verwijderen
     const deleteAccount = async () => {
-  if (!deletePassword.value) {
-    alert("Voer je wachtwoord in om te verwijderen!");
-    return;
-  }
+      if (!deletePassword.value) {
+        alert("Voer je wachtwoord in om te verwijderen!");
+        return;
+      }
 
-  try {
-    const response = await axios.delete(`http://localhost:5000/user/delete`, {
-      data: { email: user.value.email, password: deletePassword.value }
-    });
+      try {
+        const response = await axios.delete(`http://localhost:5000/user/delete`, {
+          data: { email: user.value.email, password: deletePassword.value }
+        });
 
-    alert(response.data.message);
-    localStorage.removeItem("token"); // ✅ Token verwijderen
-    router.push("/"); // ✅ Terug naar registratiepagina na verwijderen
-    // ✅ Forceer de UI om direct te herladen
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
-  } catch (error) {
-    console.error("❌ Kan account niet verwijderen:", error);
-    alert(error.response.data.message);
-    
-  }
-};
-
+        alert(response.data.message);
+        localStorage.removeItem("token");
+        router.push("/");
+        window.location.reload();
+      } catch (error) {
+        console.error("❌ Kan account niet verwijderen:", error);
+        alert(error.response.data.message);
+      }
+    };
 
     onMounted(checkAuth);
 

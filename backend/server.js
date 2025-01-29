@@ -140,18 +140,24 @@ app.post("/upload", upload.single("profile_image"), async (req, res) => {
 
 // ✅ Gebruikersgegevens bijwerken (inclusief thema)
 app.put("/user/update", async (req, res) => {
-  const { email, theme } = req.body;
+  const { email, newEmail, password, theme } = req.body;
 
   try {
+    let hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
+
+    if (newEmail) {
+      const existingUser = await db.get("SELECT email FROM users WHERE email = ?", [newEmail]);
+      if (existingUser) {
+        return res.status(400).json({ message: "E-mailadres is al in gebruik!" });
+      }
+    }
+
     await db.run(
-      "UPDATE users SET theme = ? WHERE email = ?",
-      [theme, email]
+      "UPDATE users SET email = COALESCE(?, email), password = COALESCE(?, password), theme = COALESCE(?, theme) WHERE email = ?",
+      [newEmail || email, hashedPassword || undefined, theme, email]
     );
 
-    // ✅ Haal de nieuwste gebruikersgegevens op na update
-    const updatedUser = await db.get("SELECT email, theme FROM users WHERE email = ?", [email]);
-
-    // ✅ Genereer een nieuwe token met het bijgewerkte thema
+    const updatedUser = await db.get("SELECT email, theme FROM users WHERE email = ?", [newEmail || email]);
     const newToken = jwt.sign(
       { email: updatedUser.email, theme: updatedUser.theme },
       SECRET_KEY,
@@ -164,7 +170,6 @@ app.put("/user/update", async (req, res) => {
     res.status(500).json({ message: "Fout bij het bijwerken van gegevens" });
   }
 });
-
 
 
 
