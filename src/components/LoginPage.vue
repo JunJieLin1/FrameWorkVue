@@ -55,8 +55,15 @@ export default {
           password: password.value
         });
 
-        // ✅ Token opslaan in localStorage en pagina herladen
+        // ✅ Token opslaan in localStorage en gebruiker ophalen
         localStorage.setItem("token", response.data.token);
+
+        // ✅ Decode de JWT en haal gebruikersgegevens op
+        const payload = JSON.parse(atob(response.data.token.split(".")[1]));
+        const userResponse = await axios.get(`http://localhost:5000/user/${payload.email}`);
+
+        // ✅ Sla de gebruikersinformatie op in localStorage
+        localStorage.setItem("user", JSON.stringify(userResponse.data));
 
         // ✅ Router stuurt naar dashboard en herlaadt pagina
         router.push("/dashboard");

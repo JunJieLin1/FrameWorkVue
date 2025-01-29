@@ -43,7 +43,7 @@ const SECRET_KEY = "JOUW_SECRET_KEY"; // 🔒 Zorg dat je dit verandert!
 
 
 
-// ✅ Registreren met profielfoto
+// ✅ Registreren
 app.post("/register", upload.single("profile_image"), async (req, res) => {
   try {
     const { first_name, last_name, email, password, phone, address, dob } = req.body;
@@ -110,10 +110,22 @@ app.post("/login", async (req, res) => {
 
 // ✅ Haal gebruikersinformatie op
 app.get("/user/:email", async (req, res) => {
-  const user = await db.get("SELECT first_name, last_name, email, phone, address, dob, profile_image FROM users WHERE email = ?", [req.params.email]);
-  if (!user) return res.status(404).json({ message: "Gebruiker niet gevonden" });
-  res.json(user);
+  try {
+    const user = await db.get("SELECT first_name, last_name, email, phone, address, dob, profile_image FROM users WHERE email = ?", [req.params.email]);
+    if (!user) return res.status(404).json({ message: "Gebruiker niet gevonden" });
+
+    // ✅ Voeg volledige URL toe voor profielfoto
+    if (user.profile_image) {
+      user.profile_image = `http://localhost:5000${user.profile_image}`;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Fout bij ophalen gebruiker:", error);
+    res.status(500).json({ message: "Fout bij ophalen gebruiker" });
+  }
 });
+
 
 // ✅ Profiel afbeelding uploaden (optioneel apart endpoint)
 app.post("/upload", upload.single("profile_image"), (req, res) => {
