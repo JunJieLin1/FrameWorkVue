@@ -24,14 +24,28 @@
         <i class="fas fa-user-plus"></i>
         <span>Register</span>
       </router-link>
+      <button v-if="isAuthenticated" @click="logout" class="flex items-center space-x-1 text-gray-700 hover:text-red-500">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Uitloggen</span>
+      </button>
     </div>
   </nav>
 </template>
+
 <script>
 import { useRouter } from "vue-router";
+
 export default {
   setup() {
     const router = useRouter();
+    const isAuthenticated = !!localStorage.getItem("token");
+
+    const logout = () => {
+      localStorage.removeItem("token");
+      router.push("/login");
+    };
+
+    return { isAuthenticated, logout };
   }
 };
 </script>
