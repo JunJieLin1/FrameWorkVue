@@ -14,7 +14,7 @@
       <router-link to="/help" class="hover:text-blue-500">Help</router-link>
     </div>
 
-    <!-- Login / Register -->
+    <!-- Login / Register of Profiel -->
     <div class="flex space-x-4">
       <router-link v-if="!isAuthenticated" to="/login" class="flex items-center space-x-1 text-gray-700 hover:text-blue-500">
         <i class="fas fa-user"></i>
@@ -24,28 +24,31 @@
         <i class="fas fa-user-plus"></i>
         <span>Register</span>
       </router-link>
-      <button v-if="isAuthenticated" @click="logout" class="flex items-center space-x-1 text-gray-700 hover:text-red-500">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Uitloggen</span>
-      </button>
+
+      <!-- Profiel dropdown alleen tonen als ingelogd -->
+      <ProfileDropdown v-if="isAuthenticated" />
     </div>
   </nav>
 </template>
 
 <script>
-import { useRouter } from "vue-router";
+import { ref, onMounted, watchEffect } from "vue";
+import ProfileDropdown from "@/components/ProfileDropdown.vue";
 
 export default {
+  components: { ProfileDropdown },
   setup() {
-    const router = useRouter();
-    const isAuthenticated = !!localStorage.getItem("token");
+    const isAuthenticated = ref(false);
 
-    const logout = () => {
-      localStorage.removeItem("token");
-      router.push("/login");
+    // ✅ Check direct of gebruiker is ingelogd bij het laden
+    const checkAuth = () => {
+      isAuthenticated.value = !!localStorage.getItem("token");
     };
 
-    return { isAuthenticated, logout };
+    onMounted(checkAuth);
+    watchEffect(checkAuth); // ✅ Zorgt ervoor dat navbar meteen update bij login/logout
+
+    return { isAuthenticated };
   }
 };
 </script>
