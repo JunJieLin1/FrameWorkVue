@@ -9,3 +9,11 @@
     <div class="flex space-x-6 text-gray-700 font-medium">
       <router-link to="/helloworld" class="hover:text-blue-500">HelloWorld</router-link>
     </div>
+<script>
+import { useRouter } from "vue-router";
+export default {
+  setup() {
+    const router = useRouter();
+  }
+};
+</script>
