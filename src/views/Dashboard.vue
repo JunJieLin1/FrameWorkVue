@@ -8,9 +8,11 @@
         <div v-if="element.visible" class="widget">
           <div class="widget-header">
             <h3>{{ element.name }}</h3>
-            <button @click="hideWidget(element.id)" class="widget-btn close-btn">
-              <i class="fas fa-minus"></i>
-            </button>
+            <div>
+              <button @click="hideWidget(element.id)" class="widget-btn close-btn">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
           </div>
           <component :is="element.component"></component>
         </div>
@@ -41,6 +43,7 @@ import WeatherWidget from "@/components/WeatherWidget.vue";
 import CryptoWidget from "@/components/CryptoWidget.vue";
 import NewsWidget from "@/components/NewsWidget.vue";
 import FactWidget from "@/components/FactWidget.vue";
+import IssueTracker from "@/components/IssueTracker.vue";
 
 export default {
   components: { draggable },
@@ -49,7 +52,8 @@ export default {
       { id: 1, name: "Weer 🌦️", component: markRaw(WeatherWidget), visible: true },
       { id: 2, name: "Crypto 💰", component: markRaw(CryptoWidget), visible: true },
       { id: 3, name: "Nieuws 📰", component: markRaw(NewsWidget), visible: true },
-      { id: 4, name: "Random Feit 🤔", component: markRaw(FactWidget), visible: true }
+      { id: 4, name: "Random Feit 🤔", component: markRaw(FactWidget), visible: true },  
+      { id: 5, name: "Issue Tracker 🚨", component: markRaw(IssueTracker), visible: true }
     ];
 
     const widgets = ref([]);
@@ -82,6 +86,7 @@ export default {
         case 2: return CryptoWidget;
         case 3: return NewsWidget;
         case 4: return FactWidget;
+        case 5: return IssueTracker;
         default: return null;
       }
     };

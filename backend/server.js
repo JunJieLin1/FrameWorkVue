@@ -228,6 +228,90 @@ app.delete("/user/delete", async (req, res) => {
   }
 });
 
+
+
+// ✅ API Endpoint om een nieuw issue te melden
+app.post("/issues", async (req, res) => {
+    const { title, description, reported_by } = req.body;
+    if (!title || !description || !reported_by) {
+        return res.status(400).json({ message: "Vul alle velden in!" });
+    }
+
+    try {
+        await db.run(
+            "INSERT INTO issues (title, description, reported_by) VALUES (?, ?, ?)",
+            [title, description, reported_by]
+        );
+        res.status(201).json({ message: "Issue succesvol gemeld!" });
+    } catch (error) {
+        console.error("❌ Fout bij melden van issue:", error);
+        res.status(500).json({ message: "Er ging iets mis bij het melden" });
+    }
+});
+
+// ✅ Haal alle issues op
+app.get("/issues", async (req, res) => {
+    try {
+        const issues = await db.all("SELECT * FROM issues");
+        res.json(issues);
+    } catch (error) {
+        console.error("❌ Fout bij ophalen van issues:", error);
+        res.status(500).json({ message: "Kon issues niet ophalen" });
+    }
+});
+
+// ✅ Beheerder wijst een issue toe aan een expert
+app.put("/issues/assign/:id", async (req, res) => {
+    const { id } = req.params;
+    const { assigned_to } = req.body;
+
+    try {
+        await db.run(
+            "UPDATE issues SET assigned_to = ?, status = 'Toegewezen' WHERE id = ?",
+            [assigned_to, id]
+        );
+        res.json({ message: "Issue succesvol toegewezen!" });
+    } catch (error) {
+        console.error("❌ Fout bij toewijzen van issue:", error);
+        res.status(500).json({ message: "Kon issue niet toewijzen" });
+    }
+});
+
+// ✅ Expert opent het issue
+app.put("/issues/open/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await db.run(
+            "UPDATE issues SET status = 'In behandeling' WHERE id = ?",
+            [id]
+        );
+        res.json({ message: "Issue geopend!" });
+    } catch (error) {
+        console.error("❌ Fout bij openen van issue:", error);
+        res.status(500).json({ message: "Kon issue niet openen" });
+    }
+});
+
+// ✅ Expert sluit het issue
+app.put("/issues/close/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await db.run(
+            "UPDATE issues SET status = 'Gesloten' WHERE id = ?",
+            [id]
+        );
+        res.json({ message: "Issue gesloten!" });
+    } catch (error) {
+        console.error("❌ Fout bij sluiten van issue:", error);
+        res.status(500).json({ message: "Kon issue niet sluiten" });
+    }
+});
+
+
+
+
 // ✅ Voeg de chatbot API route toe
 app.use("/api/chatbot", chatbotRoute);
 
