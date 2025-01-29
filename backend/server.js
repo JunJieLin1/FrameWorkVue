@@ -131,7 +131,7 @@ app.post("/upload", upload.single("profile_image"), async (req, res) => {
     const profileImagePath = `/uploads/${req.file.filename}`;
     await db.run("UPDATE users SET profile_image = ? WHERE email = ?", [profileImagePath, email]);
 
-    res.json({ message: "Profielfoto succesvol geüpdatet!", filePath: profileImagePath });
+    res.json({ message: "Profielfoto succesvol geüpdatet!", filePath: `http://localhost:5000${profileImagePath}` });
   } catch (error) {
     console.error("❌ Kan profielfoto niet bijwerken:", error);
     res.status(500).json({ message: "Fout bij het updaten van profielfoto" });
