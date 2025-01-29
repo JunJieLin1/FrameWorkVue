@@ -88,19 +88,12 @@ app.post("/login", async (req, res) => {
     {
       id: user.id,
       email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      phone: user.phone,
-      address: user.address,
-      dob: user.dob,
-      profile_image: user.profile_image,
-      theme: user.theme
+      theme: user.theme // 🔥 Hier wordt het thema toegevoegd!
     },
     SECRET_KEY,
     { expiresIn: "1h" }
   );
-
-  res.json({ message: "Login succesvol", token });
+  res.json({ message: "Login succesvol", token, theme: user.theme });
 });
 
 // ✅ **Haal gebruikersinformatie op**
@@ -138,65 +131,22 @@ app.post("/upload", upload.single("profile_image"), async (req, res) => {
   }
 });
 
-// ✅ **Gebruikersgegevens bijwerken**
+// ✅ **Gebruikersgegevens bijwerken (inclusief thema)**
 app.put("/user/update", async (req, res) => {
-  const { email, newEmail, password, theme } = req.body;
-  
+  const { email, theme } = req.body;
+
   try {
-    let hashedPassword;
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, 10);
-    }
-
-    if (newEmail) {
-      const existingUser = await db.get("SELECT email FROM users WHERE email = ?", [newEmail]);
-      if (existingUser) {
-        return res.status(400).json({ message: "E-mailadres is al in gebruik!" });
-      }
-    }
-
     await db.run(
-      "UPDATE users SET email = COALESCE(?, email), password = COALESCE(?, password), theme = COALESCE(?, theme) WHERE email = ?",
-      [newEmail || email, hashedPassword || undefined, theme, email]
+      "UPDATE users SET theme = ? WHERE email = ?",
+      [theme, email]
     );
 
-    res.json({ message: "Gegevens succesvol bijgewerkt!" });
+    res.json({ message: "Thema succesvol bijgewerkt!", theme });
   } catch (error) {
-    console.error("❌ Kan gegevens niet bijwerken:", error);
-    res.status(500).json({ message: "Fout bij het bijwerken van gegevens" });
+    console.error("❌ Kan thema niet bijwerken:", error);
+    res.status(500).json({ message: "Fout bij het bijwerken van thema" });
   }
 });
-
-// ✅ Account verwijderen met wachtwoordcontrole
-app.delete("/user/delete", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: "E-mail en wachtwoord zijn vereist!" });
-    }
-
-    // ✅ Controleer of de gebruiker bestaat
-    const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-    if (!user) {
-      return res.status(404).json({ message: "Gebruiker niet gevonden!" });
-    }
-
-    // ✅ Controleer of het wachtwoord correct is
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(401).json({ message: "Ongeldig wachtwoord!" });
-    }
-
-    // ✅ Verwijder de gebruiker uit de database
-    await db.run("DELETE FROM users WHERE email = ?", [email]);
-
-    res.json({ message: "Account succesvol verwijderd!" });
-  } catch (error) {
-    console.error("❌ Fout bij verwijderen van account:", error);
-    res.status(500).json({ message: "Fout bij verwijderen van account" });
-  }
-});
-
 
 // ✅ **Start de server**
 const PORT = process.env.PORT || 5000;
