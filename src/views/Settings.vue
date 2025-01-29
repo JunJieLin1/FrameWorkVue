@@ -131,22 +131,25 @@ export default {
 
     // 🔹 Account verwijderen
     const deleteAccount = async () => {
-      if (!deletePassword.value) {
-        alert("Voer je wachtwoord in om te verwijderen!");
-        return;
-      }
+  if (!deletePassword.value) {
+    alert("Voer je wachtwoord in om te verwijderen!");
+    return;
+  }
 
-      try {
-        await axios.delete(`http://localhost:5000/user/delete`, {
-          data: { email: user.value.email, password: deletePassword.value }
-        });
-        localStorage.removeItem("token");
-        router.push("/register");
-        alert("Je account is verwijderd.");
-      } catch (error) {
-        console.error("❌ Kan account niet verwijderen:", error);
-      }
-    };
+  try {
+    const response = await axios.delete(`http://localhost:5000/user/delete`, {
+      data: { email: user.value.email, password: deletePassword.value }
+    });
+
+    alert(response.data.message);
+    localStorage.removeItem("token"); // ✅ Token verwijderen
+    router.push("/register"); // ✅ Terug naar registratiepagina na verwijderen
+  } catch (error) {
+    console.error("❌ Kan account niet verwijderen:", error);
+    alert(error.response.data.message);
+  }
+};
+
 
     onMounted(checkAuth);
 

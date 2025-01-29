@@ -167,24 +167,36 @@ app.put("/user/update", async (req, res) => {
   }
 });
 
-// ✅ **Account verwijderen**
+// ✅ Account verwijderen met wachtwoordcontrole
 app.delete("/user/delete", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const user = await db.get("SELECT password FROM users WHERE email = ?", [email]);
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Onjuist wachtwoord!" });
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "E-mail en wachtwoord zijn vereist!" });
     }
 
+    // ✅ Controleer of de gebruiker bestaat
+    const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+    if (!user) {
+      return res.status(404).json({ message: "Gebruiker niet gevonden!" });
+    }
+
+    // ✅ Controleer of het wachtwoord correct is
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Ongeldig wachtwoord!" });
+    }
+
+    // ✅ Verwijder de gebruiker uit de database
     await db.run("DELETE FROM users WHERE email = ?", [email]);
 
     res.json({ message: "Account succesvol verwijderd!" });
   } catch (error) {
-    console.error("❌ Kan account niet verwijderen:", error);
-    res.status(500).json({ message: "Fout bij verwijderen" });
+    console.error("❌ Fout bij verwijderen van account:", error);
+    res.status(500).json({ message: "Fout bij verwijderen van account" });
   }
 });
+
 
 // ✅ **Start de server**
 const PORT = process.env.PORT || 5000;
